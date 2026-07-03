@@ -16,8 +16,11 @@ func CorsMiddleware() gin.HandlerFunc {
 	var allowedOrigins []string
 	envOrigins := os.Getenv("ALLOWED_ORIGINS")
 
+	// Add these print lines temporarily to debug in your Render logs
+	println("--- CORS DEBUG START ---")
+	println("RAW ENV ALLOWED_ORIGINS:", envOrigins)
+
 	if envOrigins != "" {
-		// Only split if the environment variable actually has content
 		for _, origin := range strings.Split(envOrigins, ",") {
 			trimmed := strings.TrimSpace(origin)
 			if trimmed != "" {
@@ -25,11 +28,15 @@ func CorsMiddleware() gin.HandlerFunc {
 			}
 		}
 	} else {
-		// Fallback for local development if you forget to set the env variable
 		allowedOrigins = []string{"http://localhost:5173"}
 	}
 
-	// 2. Assign your values to the safe config object
+	// Print out what your Go slice actually contains
+	for _, o := range allowedOrigins {
+		println("PARSED ALLOWED ORIGIN IN GO:", o)
+	}
+	println("--- CORS DEBUG END ---")
+
 	config.AllowOrigins = allowedOrigins
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"}
