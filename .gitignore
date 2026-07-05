@@ -1,0 +1,5 @@
+requirements.docx
+TESTING_GUIDE.md
+tmp/build-errors.log
+tmp/main.exe
+.env
