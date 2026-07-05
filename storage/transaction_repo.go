@@ -32,6 +32,23 @@ func GetTransactionsByMonth(userID uuid.UUID, startOfMonth, endOfMonth time.Time
 	return transactions, totalCount, result.Error
 }
 
+func GetTransactionsByMonthWithoutPagination(userID uuid.UUID, startOfMonth, endOfMonth time.Time) ([]Transaction, error) {
+	var transactions []Transaction
+
+	// Base query matching your filtering criteria
+	baseQuery := DB.Model(&Transaction{}).
+		Where("user_id = ? AND transaction_date BETWEEN ? AND ?", userID, startOfMonth, endOfMonth)
+
+	// 2. Fetch paginated records with preloaded relations
+	result := baseQuery.
+		Preload("Account").
+		Preload("SubCategory").
+		Preload("SubCategory.Category").
+		Find(&transactions)
+
+	return transactions, result.Error
+}
+
 func GetTransactionByID(id uuid.UUID) (*Transaction, error) {
 	var transaction Transaction
 	result := DB.First(&transaction, "id = ?", id)
@@ -41,6 +58,28 @@ func GetTransactionByID(id uuid.UUID) (*Transaction, error) {
 	return &transaction, nil
 }
 
+func CreateTransactionRecordWithoutAccountUpdate(userID uuid.UUID, accountID uuid.UUID, subCatID *uuid.UUID, txType string, amount float64, note string, transactionDate time.Time) (*Transaction, error) {
+	txRecord := Transaction{
+		ID:              uuid.New(),
+		UserID:          userID,
+		AccountID:       accountID,
+		SubCategoryID:   subCatID,
+		Type:            txType,
+		Amount:          amount,
+		Note:            note,
+		TransactionDate: transactionDate,
+	}
+
+	// Wrap execution in an internal transaction to alter standard balance changes alongside log placement
+
+	if err := DB.Create(&txRecord).Error; err != nil {
+		return nil, err
+	}
+
+	// Standard user transaction affects the spendable pool of the designated account
+
+	return &txRecord, nil
+}
 func CreateTransactionRecord(userID uuid.UUID, accountID uuid.UUID, subCatID *uuid.UUID, txType string, amount float64, note string, transactionDate time.Time) (*Transaction, error) {
 	txRecord := Transaction{
 		ID:              uuid.New(),

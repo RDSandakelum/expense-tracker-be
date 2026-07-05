@@ -53,11 +53,11 @@ func GetTransaction(c *gin.Context) {
 }
 
 type UpdateTransactionRequest struct {
-	Amount      float64 `json:"amount"`
-	Type        string  `json:"type"`
-	Description string  `json:"description"`
-	Date        string  `json:"date"`
-	CategoryID  uuid.UUID `json:"category_id"`
+	Amount        float64   `json:"amount"`
+	Type          string    `json:"type"`
+	Description   string    `json:"description"`
+	Date          string    `json:"date"`
+	CategoryID    uuid.UUID `json:"category_id"`
 	SubcategoryID uuid.UUID `json:"subcategory_id"`
 }
 
@@ -115,46 +115,11 @@ func DeleteTransaction(c *gin.Context) {
 }
 
 type CreateGoalRequest struct {
-	Name          string    `json:"name" binding:"required"`
-	Description   string    `json:"description"`
-	TargetAmount  float64   `json:"target_amount" binding:"required"`
-	Deadline      string    `json:"deadline"`
-	Category      string    `json:"category"`
-}
-
-func CreateGoal(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
-	_, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User ID not found in context"})
-		return
-	}
-
-	var req CreateGoalRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request body"})
-		return
-	}
-
-	// Dummy created goal
-	goal := GoalResponse{
-		ID:            uuid.New(),
-		Name:          req.Name,
-		Description:   req.Description,
-		TargetAmount:  req.TargetAmount,
-		CurrentAmount: 0.00,
-		Saved:         0.00,
-		Deadline:      req.Deadline,
-		Category:      req.Category,
-		Status:        "in_progress",
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Goal created successfully",
-		"goal":    goal,
-	})
+	Name         string  `json:"name" binding:"required"`
+	Description  string  `json:"description"`
+	TargetAmount float64 `json:"target_amount" binding:"required"`
+	Deadline     string  `json:"deadline"`
+	Category     string  `json:"category"`
 }
 
 type UpdateGoalRequest struct {
@@ -164,52 +129,4 @@ type UpdateGoalRequest struct {
 	CurrentAmount float64 `json:"current_amount"`
 	Deadline      string  `json:"deadline"`
 	Status        string  `json:"status"`
-}
-
-func UpdateGoal(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
-	_, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User ID not found in context"})
-		return
-	}
-
-	var req UpdateGoalRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request body"})
-		return
-	}
-
-	// Dummy updated goal
-	goal := GoalResponse{
-		ID:            uuid.New(),
-		Name:          req.Name,
-		Description:   req.Description,
-		TargetAmount:  req.TargetAmount,
-		CurrentAmount: req.CurrentAmount,
-		Saved:         req.CurrentAmount,
-		Deadline:      req.Deadline,
-		Category:      "Custom",
-		Status:        req.Status,
-		CreatedAt:     time.Now().AddDate(0, -3, 0),
-		UpdatedAt:     time.Now(),
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Goal updated successfully",
-		"goal":    goal,
-	})
-}
-
-func DeleteGoal(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
-	_, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User ID not found in context"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Goal deleted successfully",
-	})
 }

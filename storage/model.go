@@ -32,7 +32,6 @@ type Account struct {
 	CreatedAt        time.Time `gorm:"column:created_at;default:CURRENT_TIMESTAMP" json:"created_at"`
 
 	User         *User         `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Goals        []Goal        `gorm:"foreignKey:AccountID" json:"goals,omitempty"`
 	Transactions []Transaction `gorm:"foreignKey:AccountID" json:"transactions,omitempty"`
 }
 
@@ -74,7 +73,6 @@ type Budget struct {
 type Goal struct {
 	ID           uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	UserID       uuid.UUID  `gorm:"type:uuid;not null" json:"user_id"`
-	AccountID    uuid.UUID  `gorm:"type:uuid;not null" json:"account_id"`
 	Name         string     `gorm:"type:varchar(100);not null" json:"name"`
 	TargetAmount float64    `gorm:"column:target_amount;type:numeric(15,2);not null" json:"target_amount"`
 	SavedAmount  float64    `gorm:"column:saved_amount;type:numeric(15,2);not null;default:0.00" json:"saved_amount"`

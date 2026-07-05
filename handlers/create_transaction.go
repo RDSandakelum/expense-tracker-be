@@ -1,11 +1,8 @@
 package handlers
 
 import (
-	"bytes"
 	"expense-tracker-be/dto"
 	"expense-tracker-be/storage"
-	"io"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -31,17 +28,7 @@ func CreateTransaction(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
-	bodyBytes, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to read request body"})
-		return
-	}
 
-	// 2. LOG THE RAW JSON STRING HERE
-	log.Printf("📥 Raw Incoming Request Body: %s", string(bodyBytes))
-
-	// 3. CRITICAL: Restore the body stream so c.ShouldBindJSON can read it next
-	c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	// Parse request body
 	var req dto.CreateTransactionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -64,11 +51,12 @@ func CreateTransaction(c *gin.Context) {
 		return
 	}
 
-	err = storage.AddToBudget(userID, req.SubcategoryID, req.Date, req.Amount)
+	err = storage.AddToBudget(userID, req.SubcategoryID, req.Date, req.Amount, req.Type)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update budget"})
 		return
 	}
+
 	// Return created transaction
 	response := dto.TransactionResponse{
 		ID:            transaction.ID,

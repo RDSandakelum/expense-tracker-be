@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -22,6 +20,26 @@ func GetAccountByID(id uuid.UUID) (*Account, error) {
 	return &account, nil
 }
 
+func AddToAccountSpendableBalance(accountID uuid.UUID, amount float64) error {
+	result := DB.Model(&Account{}).
+		Where("id = ?", accountID).
+		Update("spendable_balance", gorm.Expr("spendable_balance + ?", amount))
+	return result.Error
+}
+
+func WithdrawAccountSpendableBalance(accountID uuid.UUID, amount float64) error {
+	result := DB.Model(&Account{}).
+		Where("id = ?", accountID).
+		Update("spendable_balance", gorm.Expr("spendable_balance - ?", amount))
+	return result.Error
+}
+
+func AddToCapitalSavingsBalance(amount float64) error {
+	return DB.Model(&Account{}).
+		Where("name = ?", "Capital").
+		Update("savings_balance", gorm.Expr("savings_balance + ?", amount)).Error
+}
+
 func CreateAccount(userID uuid.UUID, name string, spendableBalance, savingsBalance float64, currency string) (*Account, error) {
 	account := Account{
 		ID:               uuid.New(),
@@ -33,45 +51,4 @@ func CreateAccount(userID uuid.UUID, name string, spendableBalance, savingsBalan
 	}
 	result := DB.Create(&account)
 	return &account, result.Error
-}
-
-// Transactional method for drawing from savings to cover spendable deficit
-func WithdrawFromSavings(accountID uuid.UUID, goalID uuid.UUID, amount float64) error {
-	return DB.Transaction(func(tx *gorm.DB) error {
-		// 1. Deduct from Goal balance
-		var goal Goal
-		if err := tx.First(&goal, "id = ?", goalID).Error; err != nil {
-			return err
-		}
-		if goal.SavedAmount < amount {
-			return errors.New("insufficient funds in targeted goal")
-		}
-		tx.Model(&goal).Update("saved_amount", gorm.Expr("saved_amount - ?", amount))
-
-		// 2. Adjust Account Balances
-		var account Account
-		if err := tx.First(&account, "id = ?", accountID).Error; err != nil {
-			return err
-		}
-		if account.SavingsBalance < amount {
-			return errors.New("insufficient savings pool balance in account")
-		}
-
-		err := tx.Model(&account).Updates(map[string]interface{}{
-			"savings_balance":   gorm.Expr("savings_balance - ?", amount),
-			"spendable_balance": gorm.Expr("spendable_balance + ?", amount),
-		}).Error
-		if err != nil {
-			return err
-		}
-
-		// 3. Log the history record
-		withdrawal := SavingsWithdrawal{
-			ID:        uuid.New(),
-			AccountID: account.ID,
-			GoalID:    goal.ID,
-			Amount:    amount,
-		}
-		return tx.Create(&withdrawal).Error
-	})
 }

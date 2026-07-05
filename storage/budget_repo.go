@@ -30,14 +30,18 @@ func GetBudgetBySubCategoryID(userID uuid.UUID, subCategoryID uuid.UUID, month t
 	return &budget, nil
 }
 
-func AddToBudget(userID uuid.UUID, subCategoryID uuid.UUID, month time.Time, amount float64) error {
+func AddToBudget(userID uuid.UUID, subCategoryID uuid.UUID, month time.Time, amount float64, txType string) error {
 	// Normalize date context to the 1st of the target month
 	firstOfMonth := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, month.Location())
 
 	// Atomically increment the current_spend column for the matching user record
+	changeAmount := amount
+	if txType == "Credit" {
+		changeAmount = -amount // Subtract for credits
+	}
 	result := DB.Model(&Budget{}).
 		Where("user_id = ? AND sub_category_id = ? AND budget_month = ?", userID, subCategoryID, firstOfMonth).
-		Update("current_spend", gorm.Expr("current_spend + ?", amount))
+		Update("current_spend", gorm.Expr("current_spend + ?", changeAmount))
 
 	if result.Error != nil {
 		return result.Error
@@ -59,9 +63,6 @@ func InitializeMonthlyBudgetFromTemplate(userID uuid.UUID, targetMonth time.Time
 	currentMonthStart := time.Date(targetMonth.Year(), targetMonth.Month(), 1, 0, 0, 0, 0, targetMonth.Location())
 	nextMonthStart := currentMonthStart.AddDate(0, 1, 0)
 	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
-
-	log.Printf("[BudgetInit] Starting initialization for User: %s, Month: %s", userID, currentMonthStart.Format("2006-01"))
-	log.Printf("[BudgetInit] Range context: Prev Month: %s, Next Month: %s", prevMonthStart.Format("2006-01"), nextMonthStart.Format("2006-01"))
 
 	return DB.Transaction(func(tx *gorm.DB) error {
 		// 2. Fetch the user's baseline budget templates
@@ -103,6 +104,19 @@ func InitializeMonthlyBudgetFromTemplate(userID uuid.UUID, targetMonth time.Time
 					}
 				} else {
 					log.Printf("[BudgetInit][SubCat: %s] Rollover enabled but no historical record found for previous month", tmpl.SubCategoryID)
+				}
+			} else {
+				if oldBudget, exists := prevBudgetMap[tmpl.SubCategoryID]; exists {
+					totalPool := oldBudget.AllocatedAmount + oldBudget.CarriedOverAmount
+					leftOver := totalPool - oldBudget.CurrentSpend
+					if leftOver > 0 {
+						savingAmount := leftOver
+						err := AddToCapitalSavingsBalance(savingAmount)
+						if err != nil {
+							log.Printf("[BudgetInit][SubCat: %s] ERROR: Failed to add to capital savings balance: %v", tmpl.SubCategoryID, err)
+						}
+						log.Printf("[BudgetInit][SubCat: %s] added to capital savings balance: %v", tmpl.SubCategoryID, err)
+					}
 				}
 			}
 

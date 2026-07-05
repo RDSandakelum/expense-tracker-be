@@ -35,18 +35,13 @@ func main() {
 
 	// Accounts endpoints
 	protected.GET("/accounts", handlers.GetAccounts)
+	protected.POST("/accounts/transfer", handlers.TransferFunds)
 
 	// Transactions endpoints
 	protected.GET("/transactions", handlers.GetCategoryTransactionsList)
 	protected.POST("/transactions", handlers.CreateTransaction)
 	protected.PUT("/transactions/:transactionId", handlers.UpdateTransaction)
 	protected.DELETE("/transactions/:transactionId", handlers.DeleteTransaction)
-
-	// Goals endpoints
-	protected.POST("/goals/add-funds", handlers.AddFundsToGoal)
-	protected.POST("/goals", handlers.CreateGoal)
-	protected.PUT("/goals/:goalId", handlers.UpdateGoal)
-	protected.DELETE("/goals/:goalId", handlers.DeleteGoal)
 
 	//initialize budget
 	protected.GET("/budget/initialize", handlers.InitializeBudget)
