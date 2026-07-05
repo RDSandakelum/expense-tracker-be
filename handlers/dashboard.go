@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"expense-tracker-be/core/service"
 	"expense-tracker-be/storage"
 	"fmt"
 	"net/http"
@@ -12,12 +13,11 @@ import (
 )
 
 type DashboardSummary struct {
-	TotalIncome     float64 `json:"total_income"`
-	TotalExpenses   float64 `json:"total_expenses"`
-	NetBalance      float64 `json:"net_balance"`
-	RemainingBudget float64 `json:"remaining_budget"`
-	AvailableFunds  float64 `json:"available_funds"`
-	SavingsBalance  float64 `json:"savings_balance"`
+	MonthIncome       float64 `json:"month_income"`
+	MonthExpenses     float64 `json:"month_expenses"`
+	RemainingExpenses float64 `json:"remaining_expenses"`
+	MonthSavings      float64 `json:"month_savings"`
+	CarriedOver       float64 `json:"carried_over"`
 }
 
 type MonthlyCategoryTrend struct {
@@ -37,21 +37,34 @@ type BudgetItem struct {
 }
 
 func GetSummaryCards(c *gin.Context) {
-	// Get user ID from context (set by AuthMiddleware)
-	_, exists := c.Get("userID")
+
+	userIDInterface, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "User ID not found in context"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
 		return
 	}
 
+	userIDStr, ok := userIDInterface.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	dashboardSummary := service.GetMetricCards(userID)
+
 	// Dummy summary data
 	summary := DashboardSummary{
-		TotalIncome:     4500.00,
-		TotalExpenses:   1097.50,
-		NetBalance:      3402.50,
-		RemainingBudget: 402.50,
-		AvailableFunds:  5250.75,
-		SavingsBalance:  37500.50,
+		MonthIncome:       dashboardSummary.MonthIncome,
+		MonthExpenses:     dashboardSummary.MonthExpenses,
+		RemainingExpenses: dashboardSummary.RemainingExpenses,
+		MonthSavings:      dashboardSummary.MonthSavings,
+		CarriedOver:       dashboardSummary.CarriedOver,
 	}
 
 	c.JSON(http.StatusOK, summary)

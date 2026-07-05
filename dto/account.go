@@ -16,3 +16,11 @@ type AccountResponse struct {
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }
+
+type CreateTransferReqBody struct {
+	GoalID *uuid.UUID `json:"goalId"`
+	Amount float64    `json:"amount"`
+	Note   string     `json:"note"`
+	Type   string     `json:"type"`
+	Date   time.Time  `json:"date"`
+}
