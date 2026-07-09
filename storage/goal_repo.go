@@ -51,10 +51,22 @@ func AddFundsToGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount flo
 		newSavedAmount := goal.SavedAmount + amount
 		isCompleted := newSavedAmount >= goal.TargetAmount
 
-		return tx.Model(&goal).Updates(map[string]interface{}{
+		err = tx.Model(&goal).Updates(map[string]interface{}{
 			"saved_amount": newSavedAmount,
 			"is_completed": isCompleted,
 		}).Error
+
+		if err != nil {
+			return err
+		}
+
+		savingWithdrawRecord := &SavingsWithdrawal{
+			AccountID: accountID,
+			GoalID:    goalID,
+			Amount:    amount,
+			Direction: "Saved",
+		}
+		return tx.Create(savingWithdrawRecord).Error
 	})
 }
 
@@ -87,9 +99,21 @@ func WithdrawFundsFromGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amo
 		newSavedAmount := goal.SavedAmount - amount
 		isCompleted := newSavedAmount >= goal.TargetAmount
 
-		return tx.Model(&goal).Updates(map[string]interface{}{
+		err = tx.Model(&goal).Updates(map[string]interface{}{
 			"saved_amount": newSavedAmount,
 			"is_completed": isCompleted,
 		}).Error
+
+		if err != nil {
+			return err
+		}
+
+		savingWithdrawRecord := &SavingsWithdrawal{
+			AccountID: accountID,
+			GoalID:    goalID,
+			Amount:    amount,
+			Direction: "Withdrawed",
+		}
+		return tx.Create(savingWithdrawRecord).Error
 	})
 }

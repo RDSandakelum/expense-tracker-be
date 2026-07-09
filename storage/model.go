@@ -103,6 +103,7 @@ type SavingsWithdrawal struct {
 	GoalID      uuid.UUID `gorm:"type:uuid;not null" json:"goal_id"`
 	Amount      float64   `gorm:"type:numeric(15,2);not null" json:"amount"`
 	WithdrawnAt time.Time `gorm:"column:withdrawn_at;default:CURRENT_TIMESTAMP" json:"withdrawn_at"`
+	Direction   string    `gorm:"type:varchar(100);not null" json:"direction"`
 
 	Goal *Goal `gorm:"foreignKey:GoalID" json:"goal,omitempty"`
 }
