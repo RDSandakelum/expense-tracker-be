@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TransferFundsBetweenAccounts(fromAccountID, toAccountID uuid.UUID, amount float64) error {
+func TransferFundsBetweenAccounts(fromAccountID, toAccountID uuid.UUID, amount float64, userID uuid.UUID) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
 		var fromAccount Account
 		if err := tx.First(&fromAccount, "id = ?", fromAccountID).Error; err != nil {
@@ -34,8 +34,15 @@ func TransferFundsBetweenAccounts(fromAccountID, toAccountID uuid.UUID, amount f
 			FromAccountID: fromAccountID,
 			ToAccountID:   toAccountID,
 			Amount:        amount,
+			UserID:        userID,
 			TransferDate:  time.Now(),
 		}
 		return tx.Create(&transferRecord).Error
 	})
+}
+
+func GetAllAccountTransfers(userID uuid.UUID) ([]AccountTransfer, error) {
+	var accountTransfers []AccountTransfer
+	result := DB.Where("user_id = ?", userID).Find(&accountTransfers)
+	return accountTransfers, result.Error
 }

@@ -22,7 +22,7 @@ func GetGoalByID(id uuid.UUID) (*Goal, error) {
 	return &goal, nil
 }
 
-func AddFundsToGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount float64) error {
+func AddFundsToGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount float64, userID uuid.UUID) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
 		// 1. Verify spendable balance availability
 		var account Account
@@ -63,6 +63,7 @@ func AddFundsToGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount flo
 		savingWithdrawRecord := &SavingsWithdrawal{
 			AccountID: accountID,
 			GoalID:    goalID,
+			UserID:    userID,
 			Amount:    amount,
 			Direction: "Saved",
 		}
@@ -70,7 +71,7 @@ func AddFundsToGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount flo
 	})
 }
 
-func WithdrawFundsFromGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount float64) error {
+func WithdrawFundsFromGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount float64, userID uuid.UUID) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
 		// 1. Verify spendable balance availability
 		var account Account
@@ -111,8 +112,9 @@ func WithdrawFundsFromGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amo
 		savingWithdrawRecord := &SavingsWithdrawal{
 			AccountID: accountID,
 			GoalID:    goalID,
+			UserID:    userID,
 			Amount:    amount,
-			Direction: "Withdrawed",
+			Direction: "Withdrawn",
 		}
 		return tx.Create(savingWithdrawRecord).Error
 	})

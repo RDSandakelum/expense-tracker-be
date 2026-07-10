@@ -99,6 +99,7 @@ type Transaction struct {
 // SavingsWithdrawal tracks emergency dips into goal savings
 type SavingsWithdrawal struct {
 	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID      uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
 	AccountID   uuid.UUID `gorm:"type:uuid;not null" json:"account_id"`
 	GoalID      uuid.UUID `gorm:"type:uuid;not null" json:"goal_id"`
 	Amount      float64   `gorm:"type:numeric(15,2);not null" json:"amount"`
@@ -111,7 +112,8 @@ type SavingsWithdrawal struct {
 // AccountTransfer tracks pure account-to-account velocity
 type AccountTransfer struct {
 	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	FromAccountID uuid.UUID `gorm:"column:from_account_id;type:uuid;not null" json:"from_account_id"`
+	UserID        uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
+	FromAccountID uuid.UUID `gorm:"column:from_account_id; type:uuid;not null" json:"from_account_id"`
 	ToAccountID   uuid.UUID `gorm:"column:to_account_id;type:uuid;not null" json:"to_account_id"`
 	Amount        float64   `gorm:"type:numeric(15,2);not null" json:"amount"`
 	TransferDate  time.Time `gorm:"column:transfer_date;default:CURRENT_TIMESTAMP" json:"transfer_date"`

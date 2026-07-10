@@ -54,7 +54,7 @@ func TransferFunds(userID uuid.UUID, transferDirection string, amount float64, g
 		if amount > capital.SpendableBalance {
 			return false, "Insufficient spendable balance"
 		}
-		err := storage.TransferFundsBetweenAccounts(capital.ID, tax.ID, amount)
+		err := storage.TransferFundsBetweenAccounts(capital.ID, tax.ID, amount, userID)
 		if err != nil {
 			return false, "failed to transfer"
 		}
@@ -62,7 +62,7 @@ func TransferFunds(userID uuid.UUID, transferDirection string, amount float64, g
 		if amount > tax.SpendableBalance {
 			return false, "Insufficient spendable balance"
 		}
-		err := storage.TransferFundsBetweenAccounts(tax.ID, capital.ID, amount)
+		err := storage.TransferFundsBetweenAccounts(tax.ID, capital.ID, amount, userID)
 		if err != nil {
 			return false, "failed to transfer"
 		}
@@ -70,7 +70,7 @@ func TransferFunds(userID uuid.UUID, transferDirection string, amount float64, g
 		if goalID == nil {
 			return false, "goal id required"
 		}
-		err := storage.AddFundsToGoalTransaction(capital.ID, *goalID, amount)
+		err := storage.AddFundsToGoalTransaction(capital.ID, *goalID, amount, userID)
 		if err != nil {
 			return false, "failed to transfer"
 		}
@@ -78,7 +78,7 @@ func TransferFunds(userID uuid.UUID, transferDirection string, amount float64, g
 		if goalID == nil {
 			return false, "goal id required"
 		}
-		err := storage.WithdrawFundsFromGoalTransaction(capital.ID, *goalID, amount)
+		err := storage.WithdrawFundsFromGoalTransaction(capital.ID, *goalID, amount, userID)
 		if err != nil {
 			return false, "failed to transfer"
 		}

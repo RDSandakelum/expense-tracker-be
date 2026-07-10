@@ -36,6 +36,7 @@ func main() {
 	// Accounts endpoints
 	protected.GET("/accounts", handlers.GetAccounts)
 	protected.POST("/accounts/transfer", handlers.TransferFunds)
+	protected.GET("/account/transfers", handlers.GetAccountTransfers)
 
 	// Transactions endpoints
 	protected.GET("/transactions", handlers.GetCategoryTransactionsList)
