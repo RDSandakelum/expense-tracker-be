@@ -32,7 +32,7 @@ func GetAllAccountInfo(userID uuid.UUID) []dto.AccountResponse {
 	return accounts
 }
 
-func TransferFunds(userID uuid.UUID, transferDirection string, amount float64, goalID uuid.UUID) (bool, string) {
+func TransferFunds(userID uuid.UUID, transferDirection string, amount float64, goalID *uuid.UUID) (bool, string) {
 	accounts, err := storage.GetAccountsByUserID(userID)
 	if err != nil {
 		return false, "failed to fetch accounts"
@@ -54,7 +54,7 @@ func TransferFunds(userID uuid.UUID, transferDirection string, amount float64, g
 		if amount > capital.SpendableBalance {
 			return false, "Insufficient spendable balance"
 		}
-		err := storage.TransferFundsBetweenAccounts(capital.ID, tax.ID, amount)
+		err := storage.TransferFundsBetweenAccounts(capital.ID, tax.ID, amount, userID)
 		if err != nil {
 			return false, "failed to transfer"
 		}
@@ -62,17 +62,23 @@ func TransferFunds(userID uuid.UUID, transferDirection string, amount float64, g
 		if amount > tax.SpendableBalance {
 			return false, "Insufficient spendable balance"
 		}
-		err := storage.TransferFundsBetweenAccounts(tax.ID, capital.ID, amount)
+		err := storage.TransferFundsBetweenAccounts(tax.ID, capital.ID, amount, userID)
 		if err != nil {
 			return false, "failed to transfer"
 		}
 	case "Sp2Sv":
-		err := storage.AddFundsToGoalTransaction(capital.ID, goalID, amount)
+		if goalID == nil {
+			return false, "goal id required"
+		}
+		err := storage.AddFundsToGoalTransaction(capital.ID, *goalID, amount, userID)
 		if err != nil {
 			return false, "failed to transfer"
 		}
 	case "Sv2Sp":
-		err := storage.WithdrawFundsFromGoalTransaction(capital.ID, goalID, amount)
+		if goalID == nil {
+			return false, "goal id required"
+		}
+		err := storage.WithdrawFundsFromGoalTransaction(capital.ID, *goalID, amount, userID)
 		if err != nil {
 			return false, "failed to transfer"
 		}

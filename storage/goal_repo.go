@@ -22,7 +22,7 @@ func GetGoalByID(id uuid.UUID) (*Goal, error) {
 	return &goal, nil
 }
 
-func AddFundsToGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount float64) error {
+func AddFundsToGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount float64, userID uuid.UUID) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
 		// 1. Verify spendable balance availability
 		var account Account
@@ -51,14 +51,27 @@ func AddFundsToGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount flo
 		newSavedAmount := goal.SavedAmount + amount
 		isCompleted := newSavedAmount >= goal.TargetAmount
 
-		return tx.Model(&goal).Updates(map[string]interface{}{
+		err = tx.Model(&goal).Updates(map[string]interface{}{
 			"saved_amount": newSavedAmount,
 			"is_completed": isCompleted,
 		}).Error
+
+		if err != nil {
+			return err
+		}
+
+		savingWithdrawRecord := &SavingsWithdrawal{
+			AccountID: accountID,
+			GoalID:    goalID,
+			UserID:    userID,
+			Amount:    amount,
+			Direction: "Saved",
+		}
+		return tx.Create(savingWithdrawRecord).Error
 	})
 }
 
-func WithdrawFundsFromGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount float64) error {
+func WithdrawFundsFromGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amount float64, userID uuid.UUID) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
 		// 1. Verify spendable balance availability
 		var account Account
@@ -87,9 +100,22 @@ func WithdrawFundsFromGoalTransaction(accountID uuid.UUID, goalID uuid.UUID, amo
 		newSavedAmount := goal.SavedAmount - amount
 		isCompleted := newSavedAmount >= goal.TargetAmount
 
-		return tx.Model(&goal).Updates(map[string]interface{}{
+		err = tx.Model(&goal).Updates(map[string]interface{}{
 			"saved_amount": newSavedAmount,
 			"is_completed": isCompleted,
 		}).Error
+
+		if err != nil {
+			return err
+		}
+
+		savingWithdrawRecord := &SavingsWithdrawal{
+			AccountID: accountID,
+			GoalID:    goalID,
+			UserID:    userID,
+			Amount:    amount,
+			Direction: "Withdrawn",
+		}
+		return tx.Create(savingWithdrawRecord).Error
 	})
 }

@@ -37,7 +37,10 @@ func TransferFunds(c *gin.Context) {
 
 	fmt.Println(req)
 
-	_, _ = service.TransferFunds(userID, req.Type, req.Amount, *req.GoalID)
+	success, errMsg := service.TransferFunds(userID, req.Type, req.Amount, req.GoalID)
+	if !success {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": errMsg})
+	}
 
 	c.JSON(http.StatusCreated, true)
 }
