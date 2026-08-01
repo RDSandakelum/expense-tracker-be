@@ -106,7 +106,7 @@ func GetCategoryBreakdown(c *gin.Context) {
 		subItem := SubcategoryBreakdown{
 			ID:         subCat.ID,
 			Name:       subCat.Name,
-			Allocated:  b.AllocatedAmount,
+			Allocated:  totalAllocatedPool,
 			Spent:      b.CurrentSpend,
 			Remaining:  remaining,
 			Percentage: percentage,
