@@ -144,10 +144,10 @@ func GetCategoryBreakdownDashboard(c *gin.Context) {
 		budgetItems = append(budgetItems, BudgetItem{
 			ID:         budget.ID,
 			Category:   budget.SubCategory.Name,
-			Allocated:  budget.AllocatedAmount,
+			Allocated:  budget.AllocatedAmount + budget.CarriedOverAmount,
 			Spent:      budget.CurrentSpend,
-			Remaining:  (budget.AllocatedAmount - budget.CurrentSpend),
-			Percentage: (budget.CurrentSpend / budget.AllocatedAmount) * 100,
+			Remaining:  (budget.AllocatedAmount + budget.CarriedOverAmount - budget.CurrentSpend),
+			Percentage: (budget.CurrentSpend / (budget.AllocatedAmount + budget.CarriedOverAmount)) * 100,
 		})
 	}
 
@@ -215,7 +215,7 @@ func GetBudgets(c *gin.Context) {
 
 		// Use total pool (Allocation + Rollover) if you want tracking against absolute limits
 		current := categoryRollups[categoryName]
-		current.Allocated += b.AllocatedAmount
+		current.Allocated += b.AllocatedAmount + b.CarriedOverAmount
 		current.Spent += b.CurrentSpend
 
 		categoryRollups[categoryName] = current
