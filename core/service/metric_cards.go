@@ -57,7 +57,7 @@ func GetMetricCards(userID uuid.UUID) DashboardSummary {
 	cards.MonthExpenses = expenses
 	cards.CarriedOver = carriedOver
 	cards.MonthSavings = income - expenses
-	cards.RemainingExpenses = allocatedExpenses - expenses
+	cards.RemainingExpenses = (allocatedExpenses + carriedOver) - expenses
 
 	return cards
 }
