@@ -9,4 +9,5 @@ type TransactionsListDto struct {
 	Amount      string `json:"amount"`
 	Status      string `json:"status"`
 	Type        string `json:"type"`
+	Note        string `json:"note"`
 }
