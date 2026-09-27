@@ -22,6 +22,7 @@ type TransactionListResponse struct {
 	Account     string    `json:"account"`
 	CreatedAt   string    `json:"created_at"`
 	UpdatedAt   string    `json:"updated_at"`
+	Note        string    `json:"note"`
 }
 
 type TransactionsListWrapper struct {
@@ -117,6 +118,7 @@ func GetCategoryTransactionsList(c *gin.Context) {
 			Account:     accountName,
 			CreatedAt:   tx.TransactionDate.Format(time.RFC3339),
 			UpdatedAt:   tx.TransactionDate.Format(time.RFC3339), // Fallback map if explicit field isn't declared
+			Note:        tx.Note,                                 // Directly map the note field from the database transaction
 		})
 	}
 
