@@ -87,6 +87,7 @@ func InitializeMonthlyBudgetFromTemplate(userID uuid.UUID, targetMonth time.Time
 			prevBudgetMap[pb.SubCategoryID] = pb
 		}
 
+		totalCarriedOver := 0.0
 		// 4. Process each template entry to initialize the target month
 		for _, tmpl := range templates {
 			var carryOverAmount float64 = 0.00
@@ -99,24 +100,12 @@ func InitializeMonthlyBudgetFromTemplate(userID uuid.UUID, targetMonth time.Time
 
 					if leftOver > 0 {
 						carryOverAmount = leftOver
+						totalCarriedOver += carryOverAmount
 						log.Printf("[BudgetInit][SubCat: %s] Carry-over detected: %2f (Pool: %2f, Spent: %2f)",
 							tmpl.SubCategoryID, carryOverAmount, totalPool, oldBudget.CurrentSpend)
 					}
 				} else {
 					log.Printf("[BudgetInit][SubCat: %s] Rollover enabled but no historical record found for previous month", tmpl.SubCategoryID)
-				}
-			} else {
-				if oldBudget, exists := prevBudgetMap[tmpl.SubCategoryID]; exists {
-					totalPool := oldBudget.AllocatedAmount + oldBudget.CarriedOverAmount
-					leftOver := totalPool - oldBudget.CurrentSpend
-					if leftOver > 0 {
-						savingAmount := leftOver
-						err := AddToCapitalSavingsBalance(savingAmount)
-						if err != nil {
-							log.Printf("[BudgetInit][SubCat: %s] ERROR: Failed to add to capital savings balance: %v", tmpl.SubCategoryID, err)
-						}
-						log.Printf("[BudgetInit][SubCat: %s] added to capital savings balance: %v", tmpl.SubCategoryID, err)
-					}
 				}
 			}
 
@@ -171,6 +160,13 @@ func InitializeMonthlyBudgetFromTemplate(userID uuid.UUID, targetMonth time.Time
 			} else {
 				log.Printf("[BudgetInit][SubCat: %s] Successfully created a fresh monthly budget entry record.", tmpl.SubCategoryID)
 			}
+
+			err = tx.Model(&Account{}).
+				Where("user_id = ? AND name = ?", userID, "Capital").
+				UpdateColumn(
+					"spendable_balance",
+					gorm.Expr("spendable_balance + ?", totalCarriedOver),
+				).Error
 		}
 
 		log.Printf("[BudgetInit] Transaction block completed successfully for user %s", userID)
